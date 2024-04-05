@@ -10,6 +10,13 @@ wss.on("connection", function connection(ws) {
     const client = net.createConnection({ host: "127.0.0.1", port: 6969 });
 
     ws.on("message", function incoming(message) {
+        let type = Buffer.from(message).readUInt8(0);
+
+        if (type !== 50 || message.length !== 13) {
+            console.error("Invalid message from WebSocket client");
+            return;
+        }
+
         client.write(Buffer.from(message, "utf-8"));
     });
 
