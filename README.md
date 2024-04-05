@@ -18,8 +18,9 @@ docker run --rm -it -p 3000:3000 coin-game:latest
 This will start the server on port 3000. Then you have to start the UI from the
 `app` folder with
 
-(sure you can also run it with `npm install` and then run the `entrypoint.sh`
-file, but this is easier)
+(sure you can also run it with `npm install`, then copy the server binary from
+the cool project in here and then run the `entrypoint.sh` file, but this is
+easier)
 
 ```console
 cd app
