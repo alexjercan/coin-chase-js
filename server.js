@@ -20,6 +20,11 @@ wss.on("connection", function connection(ws) {
         client.write(Buffer.from(message, "utf-8"));
     });
 
+    ws.on("close", function() {
+        console.log("WebSocket client disconnected");
+        client.end();
+    });
+
     client.on("data", function(data) {
         ws.send(data);
     });
