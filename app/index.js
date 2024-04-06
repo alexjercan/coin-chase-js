@@ -1,3 +1,5 @@
+let ALLOW_HACKING = false;
+
 const minX = 0;
 const maxX = 16;
 const minY = 0;
@@ -265,6 +267,9 @@ connectButton.onclick = () => {
         client.close();
     }
 
+    players = [];
+    playerId = null;
+
     client = new WebSocket("ws://" + connectInput.value);
     client.onopen = () => {
         console.log("Connected to server");
@@ -280,7 +285,7 @@ connectButton.onclick = () => {
     };
 }
 
-let a = 0, w = 0, s = 0, d = 0;
+let a = 0, w = 0, s = 0, d = 0, space = 0;
 document.addEventListener("keydown", (event) => {
     const key = event.key;
 
@@ -292,20 +297,54 @@ document.addEventListener("keydown", (event) => {
         s = 1;
     } else if (key === "d") {
         d = 1;
+    } else if (key === " ") {
+        space = 1;
     }
 });
+
+function hackPlayerInput() {
+    let player = players.find((player) => player.id === playerId);
+
+    let xDiff = (coin.x - player.x) / cellSize;
+    let yDiff = (coin.y - player.y) / cellSize;
+
+    if (xDiff >= 0) {
+        for (let i = 0; i < xDiff; i++) {
+            sendPlayerInput(0, 0, 0, 1);
+        }
+    } else {
+        for (let i = 0; i < -xDiff; i++) {
+            sendPlayerInput(0, 1, 0, 0);
+        }
+    }
+
+    if (yDiff >= 0) {
+        for (let i = 0; i < yDiff; i++) {
+            sendPlayerInput(0, 0, 1, 0);
+        }
+    } else {
+        for (let i = 0; i < -yDiff; i++) {
+            sendPlayerInput(1, 0, 0, 0);
+        }
+    }
+};
 
 function draw() {
     ctx.clearRect(0, 0, screenWidth, screenHeight);
 
     if (playerId !== null) {
-        sendPlayerInput(w, a, s, d);
+        if (space === 1 && ALLOW_HACKING) {
+            hackPlayerInput();
+        } else {
+            sendPlayerInput(w, a, s, d);
+        }
     }
 
     w = 0;
     a = 0;
     s = 0;
     d = 0;
+    space = 0;
 
     players.forEach((player) => {
         if (player.id === playerId) {
