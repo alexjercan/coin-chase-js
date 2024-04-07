@@ -1,3 +1,10 @@
+const NORMAL = 0;
+const RANDOM = 1;
+const FOLLOW = 2;
+const STALKER = 3;
+
+let BEHAVIOUR = 0;
+
 let ALLOW_HACKING = false;
 
 const minX = 0;
@@ -66,6 +73,32 @@ const connectInput = document.createElement("input");
 connectInput.setAttribute("type", "text");
 connectInput.setAttribute("placeholder", "IP:Port");
 connectionDiv.appendChild(connectInput);
+
+const typeDropdown = document.createElement("select");
+typeDropdown.onchange = (event) => {
+    BEHAVIOUR = Number(event.target.value);
+};
+connectionDiv.appendChild(typeDropdown);
+
+const normalOption = document.createElement("option");
+normalOption.value = NORMAL;
+normalOption.innerText = "Normal";
+typeDropdown.appendChild(normalOption);
+
+const randomOption = document.createElement("option");
+randomOption.value = RANDOM;
+randomOption.innerText = "Random";
+typeDropdown.appendChild(randomOption);
+
+const followOption = document.createElement("option");
+followOption.value = FOLLOW;
+followOption.innerText = "Follow";
+typeDropdown.appendChild(followOption);
+
+const stalkerOption = document.createElement("option");
+stalkerOption.value = STALKER;
+stalkerOption.innerText = "Stalker";
+typeDropdown.appendChild(stalkerOption);
 
 const connectButton = document.createElement("button");
 connectButton.innerText = "Connect";
@@ -329,14 +362,82 @@ function hackPlayerInput() {
     }
 };
 
+function handlePlayerInput(behaviour) {
+    let player = players.find((player) => player.id === playerId);
+
+    if (player) {
+        let xDiff = (coin.x - player.x) / cellSize;
+        let yDiff = (coin.y - player.y) / cellSize;
+
+        if (behaviour === NORMAL) {
+            sendPlayerInput(w, a, s, d);
+        } else if (behaviour === RANDOM) {
+            let random = Math.floor(Math.random() * 4);
+
+            if (random === 0) {
+                sendPlayerInput(0, 0, 0, 1);
+            } else if (random === 1) {
+                sendPlayerInput(0, 1, 0, 0);
+            } else if (random === 2) {
+                sendPlayerInput(0, 0, 1, 0);
+            } else if (random === 3) {
+                sendPlayerInput(1, 0, 0, 0);
+            }
+        } else if (behaviour === FOLLOW) {
+            if (xDiff > 0) {
+                sendPlayerInput(0, 0, 0, 1);
+            } else if (xDiff < 0) {
+                sendPlayerInput(0, 1, 0, 0);
+            } else if (yDiff > 0) {
+                sendPlayerInput(0, 0, 1, 0);
+            } else if (yDiff < 0) {
+                sendPlayerInput(1, 0, 0, 0);
+            }
+        } else if (behaviour === STALKER) {
+            const closestPlayer = players.filter((player) => player.id !== playerId).reduce((prev, current) => {
+                const prevDist = Math.sqrt((prev.x - player.x) ** 2 + (prev.y - player.y) ** 2);
+                const currentDist = Math.sqrt((current.x - player.x) ** 2 + (current.y - player.y) ** 2);
+
+                return prevDist < currentDist ? prev : current;
+            });
+
+            xDiff = (closestPlayer.x - player.x) / cellSize;
+            yDiff = (closestPlayer.y - player.y) / cellSize;
+
+            if (xDiff > 0) {
+                sendPlayerInput(0, 0, 0, 1);
+            } else if (xDiff < 0) {
+                sendPlayerInput(0, 1, 0, 0);
+            } else if (yDiff > 0) {
+                sendPlayerInput(0, 0, 1, 0);
+            } else if (yDiff < 0) {
+                sendPlayerInput(1, 0, 0, 0);
+            }
+        }
+    }
+}
+
+let lastTime = Date.now();
+let currentTime = 0;
+let waitTime = Math.floor(Math.random() * 300) + 200;
+
 function draw() {
+    let deltaTime = Date.now() - lastTime;
+    currentTime += deltaTime;
+
     ctx.clearRect(0, 0, screenWidth, screenHeight);
 
     if (playerId !== null) {
         if (space === 1 && ALLOW_HACKING) {
             hackPlayerInput();
+        } else if (BEHAVIOUR !== NORMAL) {
+            if (currentTime >= waitTime) {
+                handlePlayerInput(BEHAVIOUR);
+
+                currentTime = 0;
+            }
         } else {
-            sendPlayerInput(w, a, s, d);
+            handlePlayerInput(BEHAVIOUR);
         }
     }
 
@@ -357,6 +458,8 @@ function draw() {
     coin.draw(ctx);
 
     requestAnimationFrame(draw);
+
+    lastTime = Date.now();
 }
 
 draw();
